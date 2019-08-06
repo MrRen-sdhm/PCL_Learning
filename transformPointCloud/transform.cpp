@@ -33,10 +33,10 @@ main (int argc, char** argv)
 
     filenames = pcl::console::parse_file_extension_argument (argc, argv, ".ply");
 
-    if (filenames.size () != 1)  {
+    if (filenames.size () != 2)  {
         filenames = pcl::console::parse_file_extension_argument (argc, argv, ".pcd");
 
-        if (filenames.size () != 1) {
+        if (filenames.size () != 2) {
             showHelp (argv[0]);
             return -1;
         } else {
@@ -46,10 +46,17 @@ main (int argc, char** argv)
 
     // 加载点云数据文件
     pcl::PointCloud<pcl::PointXYZ>::Ptr source_cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB> ());
 
     if (file_is_pcd) {
         if (pcl::io::loadPCDFile (argv[filenames[0]], *source_cloud) < 0)  {
             std::cout << "Error loading point cloud " << argv[filenames[0]] << std::endl << std::endl;
+            showHelp (argv[0]);
+            return -1;
+        }
+
+        if (pcl::io::loadPCDFile (argv[filenames[1]], *cloud) < 0)  {
+            std::cout << "Error loading point cloud " << argv[filenames[1]] << std::endl << std::endl;
             showHelp (argv[0]);
             return -1;
         }
@@ -135,7 +142,7 @@ main (int argc, char** argv)
 
     // # 方法2 求出两次变换矩阵后进行一次变换
     pcl::transformPointCloud (*source_cloud, *transformed_cloud, transform_NP1_to_obj);
-//    pcl::io::savePCDFileASCII("transformed.pcd", *transformed_cloud);
+    pcl::io::savePCDFileASCII("transformed.pcd", *transformed_cloud);
 
     // 可视化
     // 可视化将原始点云显示为白色，变换后的点云为红色，还设置了坐标轴、背景颜色、点显示大小
@@ -151,10 +158,12 @@ main (int argc, char** argv)
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> transformed_cloud_color_handler (transformed_cloud, 230, 20, 20); // 红
     viewer.addPointCloud (transformed_cloud, transformed_cloud_color_handler, "transformed_cloud");
 
-    viewer.addCoordinateSystem (1.0, "cloud", 0);
-    viewer.setBackgroundColor(0.05, 0.05, 0.05, 0); // 设置背景为深灰
-    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "original_cloud");
-    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "transformed_cloud");
+    viewer.addPointCloud (cloud, "cloud");
+
+    viewer.addCoordinateSystem (0.1, "cloud");
+    viewer.setBackgroundColor(0, 0, 0); // 设置背景为深灰
+//    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "original_cloud");
+//    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "transformed_cloud");
     //viewer.setPosition(800, 400); // 设置窗口位置
 
     while (!viewer.wasStopped ()) { // 在按下 "q" 键之前一直会显示窗口
