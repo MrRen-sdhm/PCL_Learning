@@ -10,16 +10,24 @@
 void readCameraInfo(cv::Mat &cameraMatrix)
 {
     // cobot
-    std::vector<double> cameraMatrixVec = {1.0751836750739103e+03, 0., 9.9204536064492709e+02,
-                                           0., 1.0787798824980591e+03, 5.5685612287788467e+02,
-                                           0., 0., 1.};
+//    std::vector<double> cameraMatrixVec = {1.0751836750739103e+03, 0., 9.9204536064492709e+02,
+//                                           0., 1.0787798824980591e+03, 5.5685612287788467e+02,
+//                                           0., 0., 1.};
     // kinect
 //    std::vector<double> cameraMatrixVec = {1.0698993215003607e+03, 0., 9.4663298692405795e+02, 0.,
 //                                           1.0700923327220949e+03, 5.4185806716826630e+02, 0., 0., 1.};
     // realsense
-//    std::vector<double> cameraMatrixVec = {615.2341918945312, 0.0, 321.7624206542969,
-//                                           0.0, 615.0606689453125, 242.582275390625,
+//    std::vector<double> cameraMatrixVec = {6.105422363281250000e+02, 0.0, 3.223493041992187500e+02,
+//                                           0.0, 6.107111206054687500e+02, 2.464488830566406250e+02,
 //                                           0.0, 0.0, 1.0};
+    // xtion
+//    std::vector<double> cameraMatrixVec = {533.6422696034836, 0.0, 319.4091030774892,
+//                                           0.0, 534.7824445233571, 236.4374299691866,
+//                                           0.0, 0.0, 1.0};
+
+    std::vector<double> cameraMatrixVec = {5.542546911911870211e+02, 0.0, 3.205000000000000000e+02,
+                                           0.0, 5.542546911911870211e+02, 2.405000000000000000e+02,
+                                           0.0, 0.0, 1.0};
 
     double *itC = cameraMatrix.ptr<double>(0, 0);
     for(size_t i = 0; i < 9; ++i, ++itC)
@@ -163,8 +171,11 @@ int main(int argc, char** argv)
 //    depth = cv::imread("../data/0001_qhd_depth.png", -1);
 
     // cobot kinect 1920*1080
-    color = cv::imread("../data/rgb.jpg");
-    depth = cv::imread("../data/depth.png", -1);
+//    color = cv::imread("../data/rgb.jpg");
+//    depth = cv::imread("../data/depth.png", -1);
+
+    color = cv::imread("../data/frame-000001.color.jpg");
+    depth = cv::imread("../data/frame-000001.depth.png", -1);
 
     std::cout << "color height " << color.rows << std::endl;
     std::cout << "color width " << color.cols << std::endl;

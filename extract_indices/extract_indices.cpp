@@ -11,7 +11,10 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/filters/statistical_outlier_removal.h>
-    #include <pcl/filters/passthrough.h>
+#include <pcl/filters/passthrough.h>
+
+#include <pcl/sample_consensus/ransac.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
 
 // 统计分析滤波
 void statistical_filter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
@@ -50,7 +53,7 @@ int main(int argc, char** argv)
     reader.read("Kinect2_XYZ.pcd", *cloud_filtered);
 #else // 下采样
     // Fill in the cloud data
-    reader.read("Kinect2_XYZ.pcd", *cloud_blob);
+    reader.read("oil_filter.pcd", *cloud_blob);
 
     std::cerr << "PointCloud before filtering: " << cloud_blob->width * cloud_blob->height << " data points." << std::endl;
 
@@ -79,7 +82,7 @@ int main(int argc, char** argv)
     seg.setModelType(pcl::SACMODEL_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC); // 设置用哪个随机参数估计方法
     seg.setMaxIterations(1000);
-    seg.setDistanceThreshold(0.01); // 设置判断是否为模型内点的距离阈值
+    seg.setDistanceThreshold(0.001); // 设置判断是否为模型内点的距离阈值 0.01
 
     // Create the filtering object
     pcl::ExtractIndices<pcl::PointXYZ> extract;
@@ -110,14 +113,38 @@ int main(int argc, char** argv)
 
         // 各平面保存为PCD文件
         std::stringstream ss;
-        ss << "table_scene_lms400_plane_" << i << ".pcd";
-//        writer.write<pcl::PointXYZ>(ss.str(), *cloud_p, false);
+        ss << "plane_" << i << ".pcd";
+        writer.write<pcl::PointXYZ>(ss.str(), *cloud_p, false);
 
         // Create the filtering object
         extract.setNegative(true);
         extract.filter(*cloud_f);
         cloud_filtered.swap(cloud_f); //更新
         i++;
+
+
+        // 保存局内点索引
+        std::vector<int> inliers;
+        // 采样一致性模型对象
+        pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr model_p(new pcl::SampleConsensusModelPlane<pcl::PointXYZ>(cloud_p));
+        pcl::RandomSampleConsensus<pcl::PointXYZ> ransac(model_p);
+        ransac.setDistanceThreshold(0.001);
+        ransac.computeModel();
+        ransac.getInliers(inliers);
+
+        std::cout << "局内点：" << inliers.size() << std::endl;
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr final(new pcl::PointCloud<pcl::PointXYZ>);
+        final->resize(inliers.size());
+
+        pcl::copyPointCloud(*cloud_p, inliers, *final);
+        pcl::io::savePCDFile("2.pcd", *final);
+
+        Eigen::VectorXf coef = Eigen::VectorXf::Zero(4 , 1);
+        ransac.getModelCoefficients(coef);
+
+        std::cout << coef << std::endl;
+
     }
     pcl::visualization::PCLVisualizer viewer("demo");
     int v1(0);
